@@ -215,6 +215,7 @@ lite/src/YtMiniLite.cs    YtMiniLite source (WinForms + WinRT MediaPlayer)
 lite/lang/*.txt           YtMiniLite translations
 lite/build.ps1            YtMiniLite build
 release.ps1               builds both and creates release zips
+LICENSE                   MIT license for this project's code
 THIRD_PARTY_NOTICES.md    licenses of bundled components
 scripts/measure-memory.ps1  real RAM use of both apps, including child processes
 cover.png, docs/          README images
@@ -257,7 +258,21 @@ yourself from source.
 
 ---
 
-## Third-party software and license
+## License
 
-The release zips include uBlock Origin (GPL-3.0), the Microsoft WebView2 SDK, yt-dlp (Unlicense) and
-Deno (MIT). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details and license locations.
+The code in this repository is licensed under the **[MIT License](LICENSE)**.
+
+You can use, modify and share it, including in your own or commercial projects, as long as you keep the
+copyright notice and the license text. The copyright notice links back to this repository as the original source:
+
+```
+Copyright (c) 2026 Srdjan-2574 (https://github.com/Srdjan-2574/Yt_Mini_Player)
+```
+
+If you build something on top of this project, a link back here is appreciated.
+
+### Third-party software
+
+The MIT License covers only this project's own code. The release zips also include uBlock Origin (GPL-3.0), the
+Microsoft WebView2 SDK, yt-dlp (Unlicense) and Deno (MIT), which keep their own licenses. See
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details and license locations.
