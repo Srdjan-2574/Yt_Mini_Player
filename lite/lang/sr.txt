@@ -1,0 +1,22 @@
+# Serbian translation for YtMiniLite. Format: English text=translation; {0} is a placeholder for a number or name.
+# To add a language, copy this file (e.g. de.txt), change @name and the translations - it shows up under Language.
+@name=Srpski
+Type a song or artist.=Ukucaj pesmu ili izvođača.
+Search songs, artists…=Pretraži pesme, izvođače…
+Searching “{0}”…=Tražim „{0}“…
+Search error: {0}=Greška pri pretrazi: {0}
+Results · {0} · double-click plays the song and starts a radio=Rezultati · {0} · dupli klik pušta pesmu i pravi radio
+Queue (radio) · {0} songs · double-click to play=Red (radio) · {0} pesama · dupli klik pušta
+Radio unavailable: {0}=Radio nije dostupan: {0}
+Loading “{0}”…=Učitavam „{0}“…
+Can't play: {0}=Ne mogu da pustim: {0}
+Playback isn't working: {0}=Puštanje ne radi: {0}
+the song stopped right after it started=pesma se prekinula odmah po startu
+Nothing playing=Ništa ne svira
+Play / pause=Pusti / pauza
+Next=Sledeća
+Previous=Prethodna
+Volume: {0}%=Jačina: {0}%
+Language=Jezik
+Show / hide=Prikaži / sakrij
+Exit=Izlaz
