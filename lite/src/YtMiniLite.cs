@@ -67,9 +67,9 @@ static class Lang
         return Map.TryGetValue(english, out translated) ? translated : english;
     }
 
-    public static string T(string english, object arg)
+    public static string T(string english, params object[] args)
     {
-        return string.Format(T(english), arg);
+        return string.Format(T(english), args);
     }
 
     // (code, name) for every language: English + every file in lang\.
@@ -309,6 +309,9 @@ sealed class LiteForm : Form
     string lastQuery = "";
     int hoverIndex = -1;
     int playToken, queueVersion, failStreak, searchToken;
+    volatile int sourceToken;   // playToken of the song currently loaded in the player, 0 = none
+    string retryId;             // song already retried once with a fresh URL
+    string skipNotice;          // shown in the header once the next song starts
     DateTime startedAt;
     bool showingQueue, extending;
 
@@ -458,16 +461,29 @@ sealed class LiteForm : Form
 
         // --- MediaPlayer (WinRT); events arrive on background threads ---
         player.AudioCategory = MediaPlayerAudioCategory.Media;
-        player.MediaEnded += (s, e) => Ui(delegate
+        // Each event remembers which song it belongs to (captured on the event thread), so an "ended" or "failed"
+        // from a song the user already left can't skip the song they just picked.
+        player.MediaEnded += (s, e) =>
         {
-            // A song that "ends" a few seconds after starting never really played.
-            if ((DateTime.UtcNow - startedAt).TotalSeconds < 5) PlaybackFailed(Lang.T("the song stopped right after it started"));
-            else Next();
-        });
+            int source = sourceToken;
+            Ui(delegate
+            {
+                if (source != sourceToken) return;
+                // A song that "ends" a few seconds after starting never really played.
+                if ((DateTime.UtcNow - startedAt).TotalSeconds < 5)
+                {
+                    PlaybackFailed(Lang.T("the song stopped right after it started"));
+                    return;
+                }
+                retryId = null;
+                Next();
+            });
+        };
         player.MediaFailed += (s, e) =>
         {
+            int source = sourceToken;
             string message = e.ErrorMessage;
-            Ui(delegate { PlaybackFailed(message); });
+            Ui(delegate { if (source == sourceToken) PlaybackFailed(message); });
         };
         player.PlaybackSession.PlaybackStateChanged += (s, e) => Ui(UpdatePlayButton);
         player.CommandManager.NextBehavior.EnablingRule = MediaCommandEnablingRule.Always;
@@ -608,6 +624,7 @@ sealed class LiteForm : Form
     {
         if (index < 0) return;
         failStreak = 0;
+        retryId = null;
         if (showingQueue) PlayAt(index);
         else StartRadio(results[index]);
     }
@@ -634,9 +651,20 @@ sealed class LiteForm : Form
             if (version != queueVersion) return; // another radio was started in the meantime
             var ids = new HashSet<string>();
             foreach (Track t in queue) ids.Add(t.Id);
+            var added = new List<Track>();
             foreach (Track t in more)
-                if (ids.Add(t.Id)) queue.Add(t);
-            if (showingQueue) ShowList(true);
+            {
+                if (!ids.Add(t.Id)) continue;
+                queue.Add(t);
+                added.Add(t);
+            }
+            if (showingQueue)
+            {
+                // Append only: rebuilding the list would scroll it and could put a different song under the
+                // mouse between the two clicks of a double-click.
+                list.Items.AddRange(added.ToArray());
+                header.Text = Lang.T("Queue (radio) · {0} songs · double-click to play", queue.Count);
+            }
             Prefetch(current + 1);
         }
         catch (Exception ex)
@@ -671,6 +699,9 @@ sealed class LiteForm : Form
     {
         if (index < 0 || index >= queue.Count) return;
         int token = ++playToken;
+        // Stop the old song right away, so it can't end (and trigger "next") while this one is loading.
+        sourceToken = 0;
+        player.Source = null;
         current = index;
         Track track = queue[index];
         now.Text = track.Title + "  ·  " + track.Artist;
@@ -700,6 +731,7 @@ sealed class LiteForm : Form
             props.Thumbnail = RandomAccessStreamReference.CreateFromUri(new Uri("https://i.ytimg.com/vi/" + track.Id + "/hqdefault.jpg"));
             item.ApplyDisplayProperties(props);
             startedAt = DateTime.UtcNow;
+            sourceToken = token;
             player.Source = item;
             player.Play();
         }
@@ -708,21 +740,39 @@ sealed class LiteForm : Form
             PlaybackFailed(ex.Message);
             return;
         }
-        if (showingQueue) header.Text = Lang.T("Queue (radio) · {0} songs · double-click to play", queue.Count);
+        if (skipNotice != null)
+        {
+            header.Text = skipNotice;
+            skipNotice = null;
+        }
+        else if (showingQueue)
+        {
+            header.Text = Lang.T("Queue (radio) · {0} songs · double-click to play", queue.Count);
+        }
 
         Prefetch(index + 1); // the next song is ready right away, no waiting for yt-dlp
         if (queue.Count - index <= 3 && !extending) ExtendQueue(queue[queue.Count - 1]);
     }
 
-    // Skips a song that won't play, but stops after 3 in a row - so it doesn't burn through the whole queue in seconds.
+    // A song that won't play gets one more try with a fresh URL, then is skipped (and the header says so).
+    // Stops after 3 skips in a row, so it doesn't burn through the whole queue in seconds.
     void PlaybackFailed(string message)
     {
-        if (current >= 0 && current < queue.Count) queue[current].Url = null; // the URL may have expired
+        if (current < 0 || current >= queue.Count) return;
+        Track track = queue[current];
+        track.Url = null; // the URL may have expired - the next attempt fetches a new one
+        if (retryId != track.Id)
+        {
+            retryId = track.Id;
+            PlayAt(current);
+            return;
+        }
         if (++failStreak >= 3)
         {
             header.Text = Lang.T("Playback isn't working: {0}", message);
             return;
         }
+        skipNotice = Lang.T("Skipped “{0}”: {1}", track.Title, message);
         Next();
     }
 
@@ -741,7 +791,9 @@ sealed class LiteForm : Form
     {
         if (player.Source == null)
         {
-            if (!showingQueue && list.SelectedIndex >= 0) ActivateItem(list.SelectedIndex);
+            // Nothing has played yet: start the selected search result. (While a song loads, Source is also
+            // null - then do nothing instead of starting something else.)
+            if (current < 0 && !showingQueue && list.SelectedIndex >= 0) ActivateItem(list.SelectedIndex);
             return;
         }
         if (player.PlaybackSession.PlaybackState == MediaPlaybackState.Playing) player.Pause();

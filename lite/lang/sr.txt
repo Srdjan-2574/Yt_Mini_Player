@@ -12,6 +12,7 @@ Loading “{0}”…=Učitavam „{0}“…
 Can't play: {0}=Ne mogu da pustim: {0}
 Playback isn't working: {0}=Puštanje ne radi: {0}
 the song stopped right after it started=pesma se prekinula odmah po startu
+Skipped “{0}”: {1}=Preskočena „{0}“: {1}
 Nothing playing=Ništa ne svira
 Play / pause=Pusti / pauza
 Next=Sledeća
