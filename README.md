@@ -1,5 +1,7 @@
 # YtMiniPlayer & YtMiniLite
 
+![YtMiniPlayer and YtMiniLite](docs/banner.png)
+
 Two small, low-resource YouTube Music players for Windows:
 
 | | **YtMiniPlayer** | **YtMiniLite** |
@@ -18,6 +20,10 @@ Two small, low-resource YouTube Music players for Windows:
 Both apps are a single small `.exe` (18–35 KB) plus their dependencies, built with nothing but tools that ship
 with Windows.
 
+| YtMiniPlayer | YtMiniLite |
+|:---:|:---:|
+| <img src="docs/screenshot-ytminiplayer.png" alt="YtMiniPlayer showing the YouTube Music home page" width="360"> | <img src="docs/screenshot-ytminilite.png" alt="YtMiniLite playing a song with its radio queue" width="360"> |
+
 > **Disclaimer:** This is an unofficial hobby project. It is not affiliated with, endorsed by or sponsored by
 > Google or YouTube. YtMiniLite uses YouTube Music's internal API and yt-dlp, which may break whenever YouTube
 > changes something, and may not be in line with YouTube's Terms of Service. Use it for personal listening at your
@@ -27,7 +33,7 @@ with Windows.
 
 ## Download and run
 
-1. Go to the **[Releases](../../releases)** page and download the zip you want:
+1. Go to the **[Releases](https://github.com/Srdjan-2574/Yt_Mini_Player/releases)** page and download the zip you want:
    - `YtMiniPlayer-vX.Y.Z-win-x64.zip`
    - `YtMiniLite-vX.Y.Z-win-x64.zip`
 2. Extract the zip to any folder (keep all the files together, the `.exe` needs the folders next to it).
@@ -110,8 +116,8 @@ Windows, and downloads the dependencies automatically.
 **Requirements:** Windows 10/11 x64, Windows PowerShell 5.1 (built in), an internet connection.
 
 ```powershell
-git clone https://github.com/<your-account>/<this-repo>.git
-cd <this-repo>
+git clone https://github.com/Srdjan-2574/Yt_Mini_Player.git
+cd Yt_Mini_Player
 
 # YtMiniPlayer -> dist\YtMiniPlayer.exe
 powershell -ExecutionPolicy Bypass -File .\build.ps1
@@ -143,6 +149,7 @@ lite/lang/*.txt           YtMiniLite translations
 lite/build.ps1            YtMiniLite build
 release.ps1               builds both and creates release zips
 THIRD_PARTY_NOTICES.md    licenses of bundled components
+docs/                     README images
 ```
 
 The source is intentionally C# 5 (no newer language features) so it compiles with the `csc.exe` that ships
