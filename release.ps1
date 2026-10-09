@@ -1,13 +1,14 @@
-# Builds both apps and packs ready-to-run zips into release\ (attach them to a GitHub release).
+# Builds the apps and packs ready-to-run zips into release\ (attach them to a GitHub release).
 # Usage: powershell -ExecutionPolicy Bypass -File .\release.ps1 -Version 1.0.0
-param([string]$Version = '1.0.0')
+#        powershell -ExecutionPolicy Bypass -File .\release.ps1 -Version 1.0.1 -Apps YtMiniLite
+param(
+    [string]$Version = '1.0.0',
+    [ValidateSet('YtMiniPlayer', 'YtMiniLite')][string[]]$Apps = @('YtMiniPlayer', 'YtMiniLite')
+)
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $out = Join-Path $root 'release'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-& "$root\build.ps1"
-& "$root\lite\build.ps1"
 
 function Pack($name, $dist) {
     $stage = Join-Path $out "stage\$name"
@@ -23,6 +24,12 @@ function Pack($name, $dist) {
 }
 
 New-Item -ItemType Directory -Force $out | Out-Null
-Pack 'YtMiniPlayer' "$root\dist"
-Pack 'YtMiniLite' "$root\lite\dist"
+if ($Apps -contains 'YtMiniPlayer') {
+    & "$root\build.ps1"
+    Pack 'YtMiniPlayer' "$root\dist"
+}
+if ($Apps -contains 'YtMiniLite') {
+    & "$root\lite\build.ps1"
+    Pack 'YtMiniLite' "$root\lite\dist"
+}
 Remove-Item -Recurse -Force (Join-Path $out 'stage')
