@@ -1,14 +1,14 @@
 # YtMiniPlayer & YtMiniLite
 
-![YtMiniPlayer and YtMiniLite](docs/banner.png)
+![YtMiniPlayer and YtMiniLite](cover.png)
 
 Two small, low-resource YouTube Music players for Windows:
 
 | | **YtMiniPlayer** | **YtMiniLite** |
 |---|---|---|
 | What it is | The real YouTube Music website in a compact window, with **uBlock Origin built in** | A native audio-only player — no website, no browser |
-| RAM while playing (window open) | ~360 MB | **~25 MB** |
-| RAM while playing (in the tray) | ~125 MB | **~25 MB** |
+| RAM while playing (window open) | ~290–360 MB | **~25–28 MB** |
+| RAM while playing (in the tray) | ~90–125 MB | **~25–28 MB** |
 | Search | YouTube Music's own UI | Search as you type (songs first, original version on top) |
 | Recommendations | Everything YouTube Music offers (home, mixes, …) | "Radio" from any song (≈50 similar songs, refills itself) |
 | Sign-in, playlists, likes, lyrics | ✅ | ❌ |
@@ -97,6 +97,73 @@ menu the next time you open it, with no rebuild needed.
 
 ---
 
+## Memory usage: measured, and how to check it yourself
+
+All numbers are the **private working set**, the same value Task Manager shows as "Memory (active private
+working set)". They were measured on Windows 11 x64 while a song was playing.
+
+| | Processes | Window open | In the tray |
+|---|---|---|---|
+| **YtMiniPlayer** | 9 (`YtMiniPlayer.exe` + 8 × `msedgewebview2.exe`) | ~290–360 MB | ~90–125 MB |
+| **YtMiniLite** | 1 (`YtMiniLite.exe`) | ~25–28 MB | ~25–28 MB |
+| + while YtMiniLite prepares a song | `yt-dlp.exe` (and sometimes `deno.exe`) | up to ~50 MB extra for ~2 s, then it exits | same |
+
+The exact numbers move around a bit with the page and the song, but the gap stays the same.
+
+### Where the memory goes in YtMiniPlayer
+
+Task Manager's `YtMiniPlayer.exe` row shows only **~6 MB**. That number is misleading, because `YtMiniPlayer.exe` is
+just the window. The YouTube Music page, uBlock Origin and audio run in separate `msedgewebview2.exe` processes
+that YtMiniPlayer starts. A real example while playing with the window open:
+
+| Task Manager "Description" | What it is | RAM |
+|---|---|---|
+| WebView2: YouTube Music | the YouTube Music page itself | 157 MB |
+| WebView2 Extension: uBlock Origin | the ad blocker | 52 MB |
+| WebView2 Manager | the main browser process | 46 MB |
+| WebView2 GPU Process | drawing (software, GPU is off) | 12 MB |
+| WebView2 Utility: Network / Audio / Storage Service, Crashpad | networking, sound, cookies, crash reports | 15 MB |
+| `YtMiniPlayer.exe` | the window | 7 MB |
+| **Total** | | **≈ 289 MB** |
+
+YtMiniLite doesn't load a web page at all, so it is a single process. Its only extra is yt-dlp, which runs for about
+2 seconds per song (usually while the previous song is still playing, because the next song is prepared ahead)
+and then exits. Deno only starts when YouTube changes its player code; otherwise yt-dlp uses its cache.
+
+### Check it yourself
+
+**Option 1: the included script (easiest).** Start one or both apps, play a song, then run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\measure-memory.ps1
+```
+
+It finds each app plus every process it started and adds them up, for example:
+
+```
+YtMiniLite: 27 MB in 1 process(es)
+    YtMiniLite.exe                          27 MB
+```
+
+**Option 2: Task Manager.**
+
+1. Open Task Manager (Ctrl+Shift+Esc) and go to the **Details** tab.
+2. Click the **Name** column to sort, and look at **Memory (active private working set)**.
+3. **YtMiniLite:** the `YtMiniLite.exe` row is the whole app. If you catch it while it prepares a song, you'll also
+   see `yt-dlp.exe` for a couple of seconds.
+4. **YtMiniPlayer:** add `YtMiniPlayer.exe` and the `msedgewebview2.exe` rows whose **Description** starts with
+   "WebView2" (WebView2 Manager, WebView2: YouTube Music, WebView2 Extension: uBlock Origin, …).
+
+Other Windows apps also use WebView2. Windows Search, Widgets, Teams and Outlook start their own
+`msedgewebview2.exe` processes (often with a plain "Utility" / "Renderer" description). The easy way to tell them
+apart: note the `msedgewebview2.exe` rows, start YtMiniPlayer, and see which ones are new. They all disappear
+again when you exit YtMiniPlayer.
+
+**Option 3: Process Explorer.** [Process Explorer](https://learn.microsoft.com/sysinternals/downloads/process-explorer)
+shows processes as a tree, so all of YtMiniPlayer's WebView2 processes appear nested under `YtMiniPlayer.exe`.
+
+---
+
 ## Where your data is stored
 
 | App | Folder | Contents |
@@ -149,7 +216,8 @@ lite/lang/*.txt           YtMiniLite translations
 lite/build.ps1            YtMiniLite build
 release.ps1               builds both and creates release zips
 THIRD_PARTY_NOTICES.md    licenses of bundled components
-docs/                     README images
+scripts/measure-memory.ps1  real RAM use of both apps, including child processes
+cover.png, docs/          README images
 ```
 
 The source is intentionally C# 5 (no newer language features) so it compiles with the `csc.exe` that ships
