@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $out = Join-Path $root 'release'
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 
 function Pack($name, $dist) {
     $stage = Join-Path $out "stage\$name"
@@ -18,7 +18,18 @@ function Pack($name, $dist) {
     if (Test-Path "$root\LICENSE") { Copy-Item "$root\LICENSE" $stage }
     $zip = Join-Path $out "$name-v$Version-win-x64.zip"
     if (Test-Path $zip) { Remove-Item $zip }
-    [IO.Compression.ZipFile]::CreateFromDirectory($stage, $zip, 'Optimal', $true)
+    # Entries are added one by one because ZipFile.CreateFromDirectory on .NET Framework writes "\" in entry
+    # names, which the zip format doesn't allow (some unzip tools then create files named "folder\file").
+    $archive = [IO.Compression.ZipFile]::Open($zip, 'Create')
+    try {
+        foreach ($file in Get-ChildItem $stage -Recurse -File) {
+            $entry = "$name/" + $file.FullName.Substring($stage.Length + 1).Replace('\', '/')
+            [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file.FullName, $entry, 'Optimal') | Out-Null
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
     Remove-Item -Recurse -Force $stage
     Write-Host ("{0} ({1:N1} MB)" -f $zip, ((Get-Item $zip).Length / 1MB))
 }
