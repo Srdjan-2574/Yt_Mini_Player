@@ -3,7 +3,6 @@
 using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -73,7 +72,7 @@ sealed class PlayerForm : Form
     public PlayerForm()
     {
         Text = "YtMiniPlayer";
-        Icon = MakeIcon();
+        Icon = LoadAppIcon();
         BackColor = Color.FromArgb(3, 3, 3);
         StartPosition = FormStartPosition.Manual;
         RestoreWindow();
@@ -95,7 +94,7 @@ sealed class PlayerForm : Form
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, delegate { Close(); });
 
-        tray.Icon = Icon;
+        tray.Icon = new Icon(Icon, SystemInformation.SmallIconSize); // the sharp small size, not a scaled-down large one
         tray.Text = Text;
         tray.ContextMenuStrip = menu;
         tray.MouseClick += (s, e) => { if (e.Button == MouseButtons.Left) ToggleWindow(); };
@@ -267,16 +266,10 @@ sealed class PlayerForm : Form
         base.OnFormClosing(e);
     }
 
-    static Icon MakeIcon()
+    // The icon embedded at build time (/resource) - the same one Explorer shows for the .exe (/win32icon).
+    static Icon LoadAppIcon()
     {
-        using (var bmp = new Bitmap(64, 64))
-        using (var g = Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            using (var red = new SolidBrush(Color.FromArgb(255, 0, 51)))
-                g.FillEllipse(red, 2, 2, 60, 60);
-            g.FillPolygon(Brushes.White, new[] { new Point(25, 18), new Point(25, 46), new Point(47, 32) });
-            return Icon.FromHandle(bmp.GetHicon());
-        }
+        using (Stream s = typeof(PlayerForm).Assembly.GetManifestResourceStream("app.ico"))
+            return new Icon(s);
     }
 }

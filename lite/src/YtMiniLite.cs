@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
@@ -324,7 +323,7 @@ sealed class LiteForm : Form
         if (iconFont.Name != "Segoe Fluent Icons") iconFont = new Font("Segoe MDL2 Assets", 12f); // Windows 10
 
         Text = "YtMiniLite";
-        Icon = MakeIcon();
+        Icon = LoadAppIcon();
         BackColor = Back;
         ForeColor = Color.White;
         Font = titleFont;
@@ -495,7 +494,7 @@ sealed class LiteForm : Form
         clock.Tick += delegate { UpdateProgress(); };
         clock.Start();
 
-        tray.Icon = Icon;
+        tray.Icon = new Icon(Icon, SystemInformation.SmallIconSize); // the sharp small size, not a scaled-down large one
         tray.Text = Text;
         tray.MouseClick += (s, e) => { if (e.Button == MouseButtons.Left) ToggleWindow(); };
         tray.Visible = true;
@@ -951,19 +950,10 @@ sealed class LiteForm : Form
         base.OnFormClosing(e);
     }
 
-    static Icon MakeIcon()
+    // The icon embedded at build time (/resource) - the same one Explorer shows for the .exe (/win32icon).
+    static Icon LoadAppIcon()
     {
-        using (var bmp = new Bitmap(64, 64))
-        using (var g = Graphics.FromImage(bmp))
-        {
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            using (var red = new SolidBrush(Accent))
-                g.FillEllipse(red, 2, 2, 60, 60);
-            // a music note instead of a triangle - so Lite looks different from the full version
-            g.FillEllipse(Brushes.White, 18, 38, 14, 11);
-            g.FillRectangle(Brushes.White, 29, 16, 4, 28);
-            g.FillPolygon(Brushes.White, new[] { new Point(29, 16), new Point(46, 22), new Point(46, 28), new Point(33, 23) });
-            return Icon.FromHandle(bmp.GetHicon());
-        }
+        using (Stream s = typeof(LiteForm).Assembly.GetManifestResourceStream("app.ico"))
+            return new Icon(s);
     }
 }

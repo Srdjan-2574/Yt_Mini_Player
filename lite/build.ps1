@@ -34,7 +34,9 @@ Copy-Item -Recurse -Force "$root\lang" $dist
 # Compile; WinRT (Windows.Media.Playback) is referenced from the system .winmd files
 $fx = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319"
 $winmd = "$env:WINDIR\System32\WinMetadata"
+#   /win32icon: the icon Explorer, shortcuts and the taskbar show; /resource: the same icon for the window and tray
 & "$fx\csc.exe" /nologo /target:winexe /platform:x64 /optimize+ "/out:$dist\YtMiniLite.exe" `
+    "/win32icon:$root\src\YtMiniLite.ico" "/resource:$root\src\YtMiniLite.ico,app.ico" `
     /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll `
     "/r:$fx\System.Runtime.dll" "/r:$fx\System.Runtime.WindowsRuntime.dll" "/r:$fx\System.Runtime.InteropServices.WindowsRuntime.dll" `
     "/r:$winmd\Windows.Foundation.winmd" "/r:$winmd\Windows.Media.winmd" "/r:$winmd\Windows.Storage.winmd" `

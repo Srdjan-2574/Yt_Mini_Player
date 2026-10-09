@@ -210,14 +210,17 @@ rebuilding, because a running `.exe` can't be overwritten.
 
 ```
 src/YtMiniPlayer.cs       YtMiniPlayer source (WinForms + WebView2)
+src/YtMiniPlayer.ico      YtMiniPlayer icon (embedded into the .exe)
 build.ps1                 YtMiniPlayer build
 lite/src/YtMiniLite.cs    YtMiniLite source (WinForms + WinRT MediaPlayer)
+lite/src/YtMiniLite.ico   YtMiniLite icon (embedded into the .exe)
 lite/lang/*.txt           YtMiniLite translations
 lite/build.ps1            YtMiniLite build
 release.ps1               builds both and creates release zips
 LICENSE                   MIT license for this project's code
 THIRD_PARTY_NOTICES.md    licenses of bundled components
 scripts/measure-memory.ps1  real RAM use of both apps, including child processes
+scripts/make-icons.ps1    regenerates the two .ico files (only needed if the artwork changes)
 cover.png, docs/          README images
 ```
 

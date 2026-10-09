@@ -40,7 +40,9 @@ Write-Host "uBlock Origin $($rel.tag_name)"
 
 # Compile
 $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+#   /win32icon: the icon Explorer, shortcuts and the taskbar show; /resource: the same icon for the window and tray
 & $csc /nologo /target:winexe /platform:x64 /optimize+ "/out:$dist\YtMiniPlayer.exe" `
+    "/win32icon:$root\src\YtMiniPlayer.ico" "/resource:$root\src\YtMiniPlayer.ico,app.ico" `
     /r:System.Windows.Forms.dll /r:System.Drawing.dll `
     "/r:$dist\Microsoft.Web.WebView2.Core.dll" "/r:$dist\Microsoft.Web.WebView2.WinForms.dll" `
     "$root\src\YtMiniPlayer.cs"
